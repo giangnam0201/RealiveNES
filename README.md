@@ -2,63 +2,45 @@
 
 Play NES games directly in your browser. No downloads, no installs — just pick a game and play.
 
-Pulls a live ROM directory from Archive.org and launches games using EmulatorJS, all without any external CORS proxies.
-
 ## How It Works
 
-### CORS Bypass via JSONP
-Archive.org's Advanced Search API doesn't support standard CORS. We use JSONP — dynamically injecting `<script>` tags with a callback parameter — to fetch game listings directly from the browser.
+1. A **built-in game catalog** (~70 classic NES titles) with direct ROM URLs
+2. Click **Play** on any game
+3. [EmulatorJS](https://emulatorjs.org/) loads the ROM and runs it instantly via WebAssembly
 
-### In-Browser Emulation
-Games are loaded directly into [EmulatorJS](https://emulatorjs.org/) (RetroArch WebAssembly core) — no ROM downloads required. Just click Play and you're gaming.
+No server, no API calls, no CORS proxy. Just open the HTML file and game.
 
-### Architecture
+## Structure
 
 ```
-index.html          - Main page with split-panel UI
+index.html        - Main page (split-panel: game list + emulator)
 js/
-├── jsonp.js        - JSONP utility (CORS bypass)
-├── archive-api.js  - Archive.org API integration
-├── rom-fetcher.js  - ROM file discovery
-└── app.js          - UI controller & emulator launcher
+├── games-db.js   - Built-in catalog of NES games with ROM URLs
+└── app.js        - UI controller + EmulatorJS launcher
 ```
-
-## Features
-
-- **Play in Browser** — Click a game, play instantly via EmulatorJS
-- **Live ROM Directory** — Fetches NES ROM listings from Archive.org
-- **Search** — Filter games by title
-- **Pagination** — Browse through large collections
-- **Save/Load States** — Built-in save state support via EmulatorJS
-- **Gamepad Support** — Controller support out of the box
-- **No Server Required** — Runs entirely in the browser (static HTML)
-- **No CORS Proxy** — JSONP for cross-origin requests
 
 ## Default Controls
 
 | Action | Key |
 |--------|-----|
 | D-Pad | Arrow Keys |
-| A Button | X |
-| B Button | Z |
+| A | X |
+| B | Z |
 | Start | Enter |
 | Select | Shift |
 | Save State | F1 |
 | Load State | F4 |
 
+Gamepads are also supported automatically.
+
 ## Usage
 
 Open `index.html` in any modern browser. That's it.
 
-```bash
-# Or serve locally
-npx serve .
-```
-
 ## Credits
 
-- [EmulatorJS](https://emulatorjs.org/) — Browser-based RetroArch emulation
-- [Archive.org](https://archive.org/) — ROM source (public domain collections)
+- [EmulatorJS](https://emulatorjs.org/) — RetroArch-based browser emulation
+- ROM source: Archive.org public collections
 
 ## License
 
