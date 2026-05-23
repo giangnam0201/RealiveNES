@@ -1,46 +1,64 @@
 # RealiveNES
 
-A browser-native NES game selector and ROM fetcher that pulls a live directory list from Archive.org's NES ROM collection — without any external CORS proxies.
+Play NES games directly in your browser. No downloads, no installs — just pick a game and play.
+
+Pulls a live ROM directory from Archive.org and launches games using EmulatorJS, all without any external CORS proxies.
 
 ## How It Works
 
 ### CORS Bypass via JSONP
+Archive.org's Advanced Search API doesn't support standard CORS. We use JSONP — dynamically injecting `<script>` tags with a callback parameter — to fetch game listings directly from the browser.
 
-Archive.org's Advanced Search API doesn't return `Access-Control-Allow-Origin` headers for standard `fetch()` requests. Instead of relying on an external CORS proxy, we use **JSONP (JSON with Padding)**:
-
-1. A `<script>` tag is dynamically injected into the document
-2. The Archive.org API URL is appended with `&callback=FUNCTION_NAME`
-3. The server wraps its JSON response in a function call
-4. The browser executes the script, invoking our callback with the data
+### In-Browser Emulation
+Games are loaded directly into [EmulatorJS](https://emulatorjs.org/) (RetroArch WebAssembly core) — no ROM downloads required. Just click Play and you're gaming.
 
 ### Architecture
 
 ```
-index.html          - Main page with game selector UI
+index.html          - Main page with split-panel UI
 js/
 ├── jsonp.js        - JSONP utility (CORS bypass)
 ├── archive-api.js  - Archive.org API integration
-├── rom-fetcher.js  - ROM file discovery & download
-└── app.js          - UI controller & event handling
+├── rom-fetcher.js  - ROM file discovery
+└── app.js          - UI controller & emulator launcher
 ```
 
 ## Features
 
-- **Live ROM Directory**: Fetches NES ROM listings directly from Archive.org
-- **Search**: Filter ROMs by title/description
-- **Pagination**: Browse through large collections
-- **Direct Downloads**: One-click ROM file downloads
-- **No Server Required**: Runs entirely in the browser
-- **No CORS Proxy**: Uses JSONP for cross-origin requests
+- **Play in Browser** — Click a game, play instantly via EmulatorJS
+- **Live ROM Directory** — Fetches NES ROM listings from Archive.org
+- **Search** — Filter games by title
+- **Pagination** — Browse through large collections
+- **Save/Load States** — Built-in save state support via EmulatorJS
+- **Gamepad Support** — Controller support out of the box
+- **No Server Required** — Runs entirely in the browser (static HTML)
+- **No CORS Proxy** — JSONP for cross-origin requests
+
+## Default Controls
+
+| Action | Key |
+|--------|-----|
+| D-Pad | Arrow Keys |
+| A Button | X |
+| B Button | Z |
+| Start | Enter |
+| Select | Shift |
+| Save State | F1 |
+| Load State | F4 |
 
 ## Usage
 
-Simply open `index.html` in any modern web browser. No build tools or server needed.
+Open `index.html` in any modern browser. That's it.
 
 ```bash
-# Or serve with any static file server
+# Or serve locally
 npx serve .
 ```
+
+## Credits
+
+- [EmulatorJS](https://emulatorjs.org/) — Browser-based RetroArch emulation
+- [Archive.org](https://archive.org/) — ROM source (public domain collections)
 
 ## License
 

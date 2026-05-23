@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RealiveNES - Game Selector</title>
+  <title>RealiveNES - Play NES Games in Browser</title>
   <style>
     * {
       margin: 0;
@@ -16,51 +16,59 @@
       background: #1a1a2e;
       color: #e0e0e0;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
     }
 
     header {
       text-align: center;
-      padding: 2rem 1rem;
+      padding: 1.5rem 1rem;
       width: 100%;
       background: linear-gradient(135deg, #16213e, #0f3460);
       border-bottom: 3px solid #e94560;
     }
 
     header h1 {
-      font-size: 2.5rem;
+      font-size: 2.2rem;
       color: #e94560;
       text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.3rem;
     }
 
     header p {
-      font-size: 1rem;
+      font-size: 0.95rem;
       color: #a0a0b0;
     }
 
-    .container {
-      max-width: 900px;
-      width: 100%;
-      padding: 2rem 1rem;
+    .layout {
+      display: flex;
+      min-height: calc(100vh - 120px);
+    }
+
+    /* Left Panel - Game List */
+    .sidebar {
+      width: 360px;
+      min-width: 360px;
+      background: #16213e;
+      border-right: 2px solid #0f3460;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     .search-bar {
       display: flex;
-      gap: 0.5rem;
-      margin-bottom: 1.5rem;
+      gap: 0.4rem;
+      padding: 1rem;
+      border-bottom: 1px solid #0f3460;
     }
 
     .search-bar input {
       flex: 1;
-      padding: 0.75rem 1rem;
+      padding: 0.6rem 0.8rem;
       border: 2px solid #0f3460;
-      border-radius: 8px;
-      background: #16213e;
+      border-radius: 6px;
+      background: #1a1a2e;
       color: #e0e0e0;
-      font-size: 1rem;
+      font-size: 0.9rem;
       outline: none;
       transition: border-color 0.3s;
     }
@@ -70,12 +78,12 @@
     }
 
     .search-bar button {
-      padding: 0.75rem 1.5rem;
+      padding: 0.6rem 1rem;
       background: #e94560;
       color: white;
       border: none;
-      border-radius: 8px;
-      font-size: 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
       cursor: pointer;
       transition: background 0.3s;
     }
@@ -84,88 +92,119 @@
       background: #d63851;
     }
 
+    .game-list-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    .game-list-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .game-list-container::-webkit-scrollbar-track {
+      background: #1a1a2e;
+    }
+
+    .game-list-container::-webkit-scrollbar-thumb {
+      background: #e94560;
+      border-radius: 3px;
+    }
+
     .status {
       text-align: center;
-      padding: 1rem;
+      padding: 1.5rem 1rem;
       color: #a0a0b0;
       font-style: italic;
+      font-size: 0.9rem;
     }
 
     .status.error {
       color: #e94560;
     }
 
-    .game-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 1rem;
-    }
-
-    .game-card {
-      background: #16213e;
-      border: 1px solid #0f3460;
-      border-radius: 10px;
-      padding: 1.25rem;
+    .game-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: 8px;
       cursor: pointer;
-      transition: transform 0.2s, border-color 0.3s, box-shadow 0.3s;
+      transition: background 0.2s, border-color 0.2s;
+      border: 1px solid transparent;
+      margin-bottom: 0.3rem;
     }
 
-    .game-card:hover {
-      transform: translateY(-3px);
+    .game-item:hover {
+      background: #1a1a2e;
       border-color: #e94560;
-      box-shadow: 0 5px 20px rgba(233, 69, 96, 0.2);
     }
 
-    .game-card h3 {
-      font-size: 0.95rem;
-      color: #ffffff;
-      margin-bottom: 0.5rem;
-      word-break: break-word;
+    .game-item.active {
+      background: #0f3460;
+      border-color: #e94560;
     }
 
-    .game-card .meta {
-      font-size: 0.8rem;
+    .game-item .game-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .game-item .game-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .game-item .game-meta {
+      font-size: 0.72rem;
       color: #7a7a8a;
+      margin-top: 0.15rem;
     }
 
-    .game-card .download-btn {
-      display: inline-block;
-      margin-top: 0.75rem;
-      padding: 0.4rem 1rem;
+    .game-item .play-btn {
+      padding: 0.35rem 0.8rem;
       background: #e94560;
       color: white;
       border: none;
       border-radius: 5px;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       cursor: pointer;
-      transition: background 0.3s;
+      white-space: nowrap;
+      transition: background 0.3s, transform 0.1s;
     }
 
-    .game-card .download-btn:hover {
+    .game-item .play-btn:hover {
       background: #d63851;
+      transform: scale(1.05);
     }
 
-    .game-card .download-btn:disabled {
+    .game-item .play-btn:disabled {
       background: #555;
       cursor: not-allowed;
+      transform: none;
     }
 
     .pagination {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 1rem;
-      margin-top: 2rem;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      border-top: 1px solid #0f3460;
     }
 
     .pagination button {
-      padding: 0.5rem 1.25rem;
+      padding: 0.4rem 0.8rem;
       background: #0f3460;
       color: #e0e0e0;
       border: 1px solid #e94560;
-      border-radius: 6px;
+      border-radius: 5px;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       transition: background 0.3s;
     }
 
@@ -180,17 +219,135 @@
 
     .pagination span {
       color: #a0a0b0;
+      font-size: 0.8rem;
+    }
+
+    /* Right Panel - Emulator */
+    .emulator-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .emulator-placeholder {
+      text-align: center;
+      color: #5a5a6a;
+    }
+
+    .emulator-placeholder h2 {
+      font-size: 1.5rem;
+      color: #e94560;
+      margin-bottom: 0.75rem;
+    }
+
+    .emulator-placeholder p {
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .emulator-placeholder .controls-hint {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #16213e;
+      border-radius: 8px;
+      border: 1px solid #0f3460;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .emulator-placeholder .controls-hint h3 {
+      color: #e94560;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .emulator-placeholder .controls-hint div {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.3rem;
+    }
+
+    .emulator-placeholder .controls-hint span {
+      color: #7a7a8a;
+    }
+
+    .emulator-placeholder .controls-hint code {
+      color: #e0e0e0;
+      background: #0f3460;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.8rem;
+    }
+
+    #emulator-wrapper {
+      width: 100%;
+      max-width: 740px;
+      aspect-ratio: 4 / 3;
+      display: none;
+    }
+
+    #emulator-wrapper.active {
+      display: block;
+    }
+
+    .now-playing {
+      display: none;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem 1.25rem;
+      background: #16213e;
+      border: 1px solid #e94560;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 740px;
+    }
+
+    .now-playing.active {
+      display: flex;
+    }
+
+    .now-playing .np-title {
+      flex: 1;
+      font-weight: 600;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    .now-playing .np-label {
+      font-size: 0.75rem;
+      color: #e94560;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .now-playing .stop-btn {
+      padding: 0.4rem 1rem;
+      background: #e94560;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .now-playing .stop-btn:hover {
+      background: #d63851;
     }
 
     .loader {
       display: inline-block;
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
       border: 3px solid #0f3460;
       border-top-color: #e94560;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
-      margin: 0 auto;
     }
 
     @keyframes spin {
@@ -198,11 +355,31 @@
     }
 
     footer {
-      margin-top: auto;
-      padding: 1.5rem;
+      padding: 1rem;
       text-align: center;
       color: #5a5a6a;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
+      background: #16213e;
+      border-top: 1px solid #0f3460;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .layout {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-height: 45vh;
+        border-right: none;
+        border-bottom: 2px solid #0f3460;
+      }
+
+      #emulator-wrapper {
+        max-width: 100%;
+      }
     }
   </style>
 </head>
@@ -212,20 +389,55 @@
     <p>Browser-Native NES ROM Selector &mdash; Powered by Archive.org</p>
   </header>
 
-  <div class="container">
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Search NES ROMs..." />
-      <button id="searchBtn">Search</button>
-    </div>
+  <div class="layout">
+    <!-- Game List Sidebar -->
+    <aside class="sidebar">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search NES ROMs..." />
+        <button id="searchBtn">Search</button>
+      </div>
+      <div class="game-list-container" id="gameListContainer">
+        <div id="status" class="status">Loading game list...</div>
+        <div id="gameList"></div>
+      </div>
+      <div class="pagination" id="pagination" style="display:none;">
+        <button id="prevBtn">&larr; Prev</button>
+        <span id="pageInfo">Page 1</span>
+        <button id="nextBtn">Next &rarr;</button>
+      </div>
+    </aside>
 
-    <div id="status" class="status">Loading game list...</div>
-    <div id="gameList" class="game-list"></div>
+    <!-- Emulator Panel -->
+    <main class="emulator-panel">
+      <div class="now-playing" id="nowPlaying">
+        <div>
+          <div class="np-label">Now Playing</div>
+          <div class="np-title" id="nowPlayingTitle">-</div>
+        </div>
+        <button class="stop-btn" id="stopBtn">Stop</button>
+      </div>
 
-    <div class="pagination" id="pagination" style="display:none;">
-      <button id="prevBtn">&#8592; Prev</button>
-      <span id="pageInfo">Page 1</span>
-      <button id="nextBtn">Next &#8594;</button>
-    </div>
+      <div id="emulator-wrapper">
+        <div id="game"></div>
+      </div>
+
+      <div class="emulator-placeholder" id="emulatorPlaceholder">
+        <h2>Select a Game to Play</h2>
+        <p>Choose a game from the list and click Play.<br/>The emulator will load right here in your browser.</p>
+        <div class="controls-hint">
+          <h3>Default Controls</h3>
+          <div>
+            <span>D-Pad:</span> <code>Arrow Keys</code>
+            <span>A Button:</span> <code>X</code>
+            <span>B Button:</span> <code>Z</code>
+            <span>Start:</span> <code>Enter</code>
+            <span>Select:</span> <code>Shift</code>
+            <span>Save State:</span> <code>F1</code>
+            <span>Load State:</span> <code>F4</code>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 
   <footer>

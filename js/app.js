@@ -1,8 +1,8 @@
 /**
- * Main Application - Game Selector UI Controller
+ * Main Application - Game Selector & Emulator Controller
  * 
- * Orchestrates the game list display, search, pagination,
- * and ROM download interactions.
+ * Orchestrates the game list, search, pagination, and launches
+ * EmulatorJS to play NES ROMs directly in the browser.
  */
 
 const App = (() => {
@@ -11,6 +11,8 @@ const App = (() => {
   let currentQuery = '';
   let totalResults = 0;
   let isLoading = false;
+  let currentGameId = null;
+  let emulatorLoaded = false;
 
   // DOM Elements
   const searchInput = document.getElementById('searchInput');
@@ -21,6 +23,11 @@ const App = (() => {
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
   const pageInfoEl = document.getElementById('pageInfo');
+  const emulatorWrapper = document.getElementById('emulator-wrapper');
+  const emulatorPlaceholder = document.getElementById('emulatorPlaceholder');
+  const nowPlaying = document.getElementById('nowPlaying');
+  const nowPlayingTitle = document.getElementById('nowPlayingTitle');
+  const stopBtn = document.getElementById('stopBtn');
 
   /**
    * Initialize the application
@@ -33,13 +40,14 @@ const App = (() => {
     });
     prevBtn.addEventListener('click', () => changePage(-1));
     nextBtn.addEventListener('click', () => changePage(1));
+    stopBtn.addEventListener('click', stopEmulator);
 
     // Load initial list
     loadGames();
   }
 
   /**
-   * Handle search button click
+   * Handle search
    */
   function handleSearch() {
     const query = searchInput.value.trim();
@@ -50,7 +58,6 @@ const App = (() => {
 
   /**
    * Change page
-   * @param {number} delta - Page change (+1 or -1)
    */
   function changePage(delta) {
     const newPage = currentPage + delta;
@@ -82,12 +89,11 @@ const App = (() => {
 
       if (result.items.length === 0) {
         showStatus(currentQuery
-          ? `No ROMs found for "${currentQuery}". Try a different search.`
+          ? `No ROMs found for "${escapeHtml(currentQuery)}".`
           : 'No ROMs found in the collection.');
         return;
       }
 
-      // Clear status and render games
       statusEl.style.display = 'none';
       renderGameList(result.items);
       renderPagination();
@@ -100,70 +106,147 @@ const App = (() => {
 
   /**
    * Render the game list
-   * @param {Array} items - Game items from Archive.org
    */
   function renderGameList(items) {
     gameListEl.innerHTML = '';
 
     items.forEach(item => {
-      const card = document.createElement('div');
-      card.className = 'game-card';
+      const el = document.createElement('div');
+      el.className = 'game-item' + (item.identifier === currentGameId ? ' active' : '');
 
       const title = escapeHtml(item.title);
       const creator = escapeHtml(item.creator);
-      const size = ROMFetcher.formatSize(item.size);
 
-      card.innerHTML = `
-        <h3>${title}</h3>
-        <div class="meta">
-          ${creator !== 'Unknown' ? `<div>By: ${creator}</div>` : ''}
-          <div>Size: ${size}</div>
+      el.innerHTML = `
+        <div class="game-info">
+          <div class="game-title" title="${title}">${title}</div>
+          <div class="game-meta">${creator !== 'Unknown' ? creator : ''}</div>
         </div>
-        <button class="download-btn" data-id="${item.identifier}">
-          Download ROM
-        </button>
+        <button class="play-btn">Play</button>
       `;
 
-      // Download button handler
-      const btn = card.querySelector('.download-btn');
+      const btn = el.querySelector('.play-btn');
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        handleDownload(item.identifier, btn);
+        launchGame(item.identifier, item.title, btn);
       });
 
-      gameListEl.appendChild(card);
+      el.addEventListener('click', () => {
+        launchGame(item.identifier, item.title, btn);
+      });
+
+      gameListEl.appendChild(el);
     });
   }
 
   /**
-   * Handle ROM download
-   * @param {string} identifier - Archive.org item identifier
-   * @param {HTMLElement} btn - The download button element
+   * Launch the emulator with a specific game
    */
-  async function handleDownload(identifier, btn) {
-    btn.disabled = true;
-    btn.textContent = 'Fetching...';
+  async function launchGame(identifier, title, btn) {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Loading...';
+    }
 
     try {
+      // Get the ROM URL
       const romInfo = await ROMFetcher.fetchROM(identifier);
-      ROMFetcher.triggerDownload(romInfo.url, romInfo.filename);
-      btn.textContent = 'Downloaded!';
-      setTimeout(() => {
-        btn.textContent = 'Download ROM';
-        btn.disabled = false;
-      }, 2000);
+
+      // Stop any current emulator instance
+      stopEmulator();
+
+      // Set current game
+      currentGameId = identifier;
+
+      // Update UI
+      nowPlayingTitle.textContent = title;
+      nowPlaying.classList.add('active');
+      emulatorPlaceholder.style.display = 'none';
+      emulatorWrapper.classList.add('active');
+
+      // Mark active in list
+      document.querySelectorAll('.game-item').forEach(el => el.classList.remove('active'));
+      if (btn) btn.closest('.game-item').classList.add('active');
+
+      // Load EmulatorJS
+      loadEmulator(romInfo.url);
+
     } catch (err) {
-      btn.textContent = 'Error!';
-      console.error('Download error:', err);
-      setTimeout(() => {
-        btn.textContent = 'Download ROM';
+      console.error('Failed to launch game:', err);
+      alert(`Failed to load game: ${err.message}`);
+    } finally {
+      if (btn) {
+        btn.textContent = 'Play';
         btn.disabled = false;
-      }, 2000);
+      }
     }
   }
 
   /**
-   * Render pagination controls
+   * Load EmulatorJS with the given ROM URL
+   */
+  function loadEmulator(romUrl) {
+    // Clear previous emulator
+    const gameDiv = document.getElementById('game');
+    gameDiv.innerHTML = '';
+
+    // Remove any previously injected EmulatorJS scripts
+    document.querySelectorAll('script[data-emulatorjs]').forEach(s => s.remove());
+
+    // Set EmulatorJS global config
+    window.EJS_player = '#game';
+    window.EJS_core = 'nes';
+    window.EJS_gameUrl = romUrl;
+    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+    window.EJS_color = '#e94560';
+    window.EJS_startOnLoaded = true;
+    window.EJS_defaultControls = true;
+
+    // Inject the EmulatorJS loader script
+    const script = document.createElement('script');
+    script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+    script.setAttribute('data-emulatorjs', 'true');
+    document.body.appendChild(script);
+
+    emulatorLoaded = true;
+  }
+
+  /**
+   * Stop the emulator and reset the view
+   */
+  function stopEmulator() {
+    if (!emulatorLoaded) return;
+
+    // Clear emulator container
+    const gameDiv = document.getElementById('game');
+    gameDiv.innerHTML = '';
+
+    // Remove EmulatorJS scripts
+    document.querySelectorAll('script[data-emulatorjs]').forEach(s => s.remove());
+
+    // Clean up EmulatorJS globals
+    delete window.EJS_player;
+    delete window.EJS_core;
+    delete window.EJS_gameUrl;
+    delete window.EJS_pathtodata;
+    delete window.EJS_color;
+    delete window.EJS_startOnLoaded;
+    delete window.EJS_defaultControls;
+    delete window.EJS_emulator;
+
+    // Reset UI
+    emulatorWrapper.classList.remove('active');
+    emulatorPlaceholder.style.display = '';
+    nowPlaying.classList.remove('active');
+    currentGameId = null;
+    emulatorLoaded = false;
+
+    // Remove active from game items
+    document.querySelectorAll('.game-item').forEach(el => el.classList.remove('active'));
+  }
+
+  /**
+   * Render pagination
    */
   function renderPagination() {
     const totalPages = Math.ceil(totalResults / ArchiveAPI.PAGE_SIZE);
@@ -176,13 +259,11 @@ const App = (() => {
     paginationEl.style.display = 'flex';
     prevBtn.disabled = currentPage <= 1;
     nextBtn.disabled = currentPage >= totalPages;
-    pageInfoEl.textContent = `Page ${currentPage} of ${totalPages} (${totalResults} ROMs)`;
+    pageInfoEl.textContent = `${currentPage} / ${totalPages}`;
   }
 
   /**
    * Show status message
-   * @param {string} message - HTML message to display
-   * @param {boolean} isError - Whether this is an error message
    */
   function showStatus(message, isError = false) {
     statusEl.style.display = 'block';
@@ -191,9 +272,7 @@ const App = (() => {
   }
 
   /**
-   * Escape HTML to prevent XSS
-   * @param {string} str
-   * @returns {string}
+   * Escape HTML
    */
   function escapeHtml(str) {
     if (!str) return '';
@@ -202,12 +281,12 @@ const App = (() => {
     return div.innerHTML;
   }
 
-  // Initialize on DOM ready
+  // Init
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
 
-  return { init, loadGames };
+  return { init, loadGames, stopEmulator };
 })();
