@@ -1,8 +1,9 @@
 /**
  * RealiveNES - Main Application
  * 
- * Game selector UI + EmulatorJS integration.
- * Uses built-in GamesDB catalog (no API calls needed).
+ * Game selector UI + EmulatorJS integration via iframe.
+ * Uses iframe approach so EmulatorJS can be fully reloaded
+ * for each new game without "already declared" errors.
  */
 
 const App = (() => {
@@ -10,7 +11,7 @@ const App = (() => {
   let currentQuery = '';
   let currentGenre = '';
   let currentGameTitle = null;
-  let emulatorLoaded = false;
+  let emulatorActive = false;
 
   // DOM refs
   const searchInput = document.getElementById('searchInput');
@@ -105,59 +106,82 @@ const App = (() => {
     document.querySelectorAll('.game-item').forEach(el => el.classList.remove('active'));
     if (btn) btn.closest('.game-item').classList.add('active');
 
-    // Load EmulatorJS
-    loadEmulator(game.rom);
+    // Load EmulatorJS in iframe (avoids "already declared" errors on reload)
+    loadEmulatorIframe(game.rom);
 
     // Reset button
     if (btn) {
       setTimeout(() => {
         btn.textContent = 'Play';
         btn.disabled = false;
-      }, 1000);
+      }, 1500);
     }
   }
 
-  function loadEmulator(romUrl) {
-    const gameDiv = document.getElementById('game');
-    gameDiv.innerHTML = '';
+  /**
+   * Load EmulatorJS inside an iframe to get a fresh JS context each time.
+   * This avoids the "Identifier 'EJS_STORAGE' has already been declared" error.
+   */
+  function loadEmulatorIframe(romUrl) {
+    const container = document.getElementById('game');
+    container.innerHTML = '';
 
-    // Remove old scripts
-    document.querySelectorAll('script[data-ejs]').forEach(s => s.remove());
+    const iframe = document.createElement('iframe');
+    iframe.id = 'emu-frame';
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.border = 'none';
+    iframe.style.borderRadius = '8px';
+    iframe.style.background = '#000';
+    iframe.allow = 'autoplay; gamepad';
 
-    // EmulatorJS config
-    window.EJS_player = '#game';
-    window.EJS_core = 'nes';
-    window.EJS_gameUrl = romUrl;
-    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
-    window.EJS_color = '#e94560';
-    window.EJS_startOnLoaded = true;
+    container.appendChild(iframe);
 
-    // Load EmulatorJS
-    const script = document.createElement('script');
-    script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
-    script.setAttribute('data-ejs', 'true');
-    document.body.appendChild(script);
+    // Build the iframe HTML content
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body, html { width: 100%; height: 100%; overflow: hidden; background: #000; }
+  #game { width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div id="game"></div>
+<script>
+  EJS_player = '#game';
+  EJS_core = 'nes';
+  EJS_gameUrl = '${romUrl}';
+  EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+  EJS_color = '#e94560';
+  EJS_startOnLoaded = true;
+<\/script>
+<script src="https://cdn.emulatorjs.org/stable/data/loader.js"><\/script>
+</body>
+</html>`;
 
-    emulatorLoaded = true;
+    // Write to iframe
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    emulatorActive = true;
   }
 
   function stopEmulator() {
-    if (!emulatorLoaded) return;
+    if (!emulatorActive) return;
 
-    const gameDiv = document.getElementById('game');
-    gameDiv.innerHTML = '';
-
-    document.querySelectorAll('script[data-ejs]').forEach(s => s.remove());
-
-    // Cleanup globals
-    const ejsKeys = Object.keys(window).filter(k => k.startsWith('EJS_'));
-    ejsKeys.forEach(k => delete window[k]);
+    const container = document.getElementById('game');
+    container.innerHTML = '';
 
     emulatorWrapper.classList.remove('active');
     emulatorPlaceholder.style.display = '';
     nowPlaying.classList.remove('active');
     currentGameTitle = null;
-    emulatorLoaded = false;
+    emulatorActive = false;
 
     document.querySelectorAll('.game-item').forEach(el => el.classList.remove('active'));
   }
