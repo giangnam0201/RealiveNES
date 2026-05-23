@@ -1,132 +1,100 @@
 /**
- * NES Games Database
+ * NES Games Database - Dynamic loader
  * 
- * Curated catalog of classic NES games from Archive.org (roms_nes collection).
- * Uses the CORS-enabled endpoint: https://archive.org/cors/{id}/{file}
+ * Fetches the FULL game list from Archive.org metadata API at runtime.
+ * Uses: https://archive.org/metadata/roms_nes/files (CORS-enabled, returns all 1200+ files)
+ * ROM URLs: https://archive.org/cors/roms_nes/{filename} (CORS-enabled downloads)
  * 
- * EmulatorJS handles .zip extraction natively — no client-side unzipping needed.
+ * EmulatorJS handles .zip extraction natively.
  */
 
 const GamesDB = (() => {
-  const BASE = 'https://archive.org/cors/roms_nes/';
+  const METADATA_URL = 'https://archive.org/metadata/roms_nes/files';
+  const ROM_BASE = 'https://archive.org/cors/roms_nes/';
 
-  function rom(filename) {
-    return BASE + encodeURIComponent(filename);
+  let allGames = [];
+  let genres = [];
+  let loaded = false;
+  let loadPromise = null;
+
+  /**
+   * Fetch full game list from Archive.org metadata API
+   */
+  function load() {
+    if (loadPromise) return loadPromise;
+
+    loadPromise = fetch(METADATA_URL)
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        const files = data.result || [];
+        allGames = [];
+
+        for (const f of files) {
+          const name = f.name;
+          if (!name.endsWith('.zip')) continue;
+
+          // Filter: only USA/World releases, skip betas/protos/virtual console/aftermarket
+          if (!/(USA|World)/.test(name)) continue;
+          if (/Beta|Proto|Virtual Console|Aftermarket|Unl\)|e-Reader|Rev \d|GameCube|Pirate|Sample|Competition|Test Program|Wii/.test(name)) continue;
+
+          // Extract clean title from filename
+          const title = name
+            .replace('.zip', '')
+            .replace(/\s*\(.*$/, '') // remove everything after first (
+            .trim();
+
+          if (!title) continue;
+
+          // Guess genre from common keywords (basic heuristic)
+          const genre = guessGenre(title);
+
+          allGames.push({
+            title: title,
+            filename: name,
+            genre: genre,
+            size: parseInt(f.size, 10) || 0,
+            rom: ROM_BASE + encodeURIComponent(name)
+          });
+        }
+
+        // Sort alphabetically
+        allGames.sort((a, b) => a.title.localeCompare(b.title));
+
+        // Extract unique genres
+        genres = [...new Set(allGames.map(g => g.genre))].sort();
+
+        loaded = true;
+        return allGames;
+      });
+
+    return loadPromise;
   }
 
-  const games = [
-    // === PLATFORMERS ===
-    { title: 'Super Mario Bros. 2', genre: 'Platformer', year: 1988, rom: rom('Super Mario Bros. 2 (USA).zip') },
-    { title: 'Super Mario Bros. 3', genre: 'Platformer', year: 1990, rom: rom('Super Mario Bros. 3 (USA).zip') },
-    { title: 'Kirby\'s Adventure', genre: 'Platformer', year: 1993, rom: rom('Kirby\'s Adventure (USA).zip') },
-    { title: 'DuckTales', genre: 'Platformer', year: 1989, rom: rom('DuckTales (USA).zip') },
-    { title: 'DuckTales 2', genre: 'Platformer', year: 1993, rom: rom('DuckTales 2 (USA).zip') },
-    { title: 'Chip \'n Dale - Rescue Rangers', genre: 'Platformer', year: 1990, rom: rom('Chip \'n Dale - Rescue Rangers (USA).zip') },
-    { title: 'Chip \'n Dale - Rescue Rangers 2', genre: 'Platformer', year: 1994, rom: rom('Chip \'n Dale - Rescue Rangers 2 (USA).zip') },
-    { title: 'Mega Man', genre: 'Platformer', year: 1987, rom: rom('Mega Man (USA).zip') },
-    { title: 'Mega Man 2', genre: 'Platformer', year: 1989, rom: rom('Mega Man 2 (USA).zip') },
-    { title: 'Mega Man 3', genre: 'Platformer', year: 1990, rom: rom('Mega Man 3 (USA).zip') },
-    { title: 'Mega Man 4', genre: 'Platformer', year: 1992, rom: rom('Mega Man 4 (USA).zip') },
-    { title: 'Mega Man 5', genre: 'Platformer', year: 1992, rom: rom('Mega Man 5 (USA).zip') },
-    { title: 'Mega Man 6', genre: 'Platformer', year: 1994, rom: rom('Mega Man 6 (USA).zip') },
-    { title: 'Adventure Island', genre: 'Platformer', year: 1988, rom: rom('Adventure Island (USA).zip') },
-    { title: 'Adventure Island II', genre: 'Platformer', year: 1991, rom: rom('Adventure Island II (USA).zip') },
-    { title: 'Adventure Island 3', genre: 'Platformer', year: 1992, rom: rom('Adventure Island 3 (USA).zip') },
-    { title: 'Bubble Bobble', genre: 'Platformer', year: 1988, rom: rom('Bubble Bobble (USA).zip') },
-    { title: 'Ghosts\'n Goblins', genre: 'Platformer', year: 1986, rom: rom('Ghosts\'n Goblins (USA).zip') },
-    { title: 'Kid Icarus', genre: 'Platformer', year: 1987, rom: rom('Kid Icarus (USA, Europe).zip') },
-    { title: 'Prince of Persia', genre: 'Platformer', year: 1992, rom: rom('Prince of Persia (USA).zip') },
-    { title: 'Lode Runner', genre: 'Platformer', year: 1984, rom: rom('Lode Runner (USA).zip') },
-    { title: 'Donkey Kong Classics', genre: 'Platformer', year: 1988, rom: rom('Donkey Kong Classics (USA, Europe).zip') },
-    { title: 'Ice Climber', genre: 'Platformer', year: 1985, rom: rom('Ice Climber (USA, Europe, Korea) (En).zip') },
-    { title: 'Elevator Action', genre: 'Platformer', year: 1987, rom: rom('Elevator Action (USA).zip') },
-    { title: 'Bionic Commando', genre: 'Platformer', year: 1988, rom: rom('Bionic Commando (USA).zip') },
-    { title: 'Faxanadu', genre: 'Platformer', year: 1989, rom: rom('Faxanadu (USA).zip') },
-
-    // === ACTION ===
-    { title: 'Contra', genre: 'Action', year: 1988, rom: rom('Contra (USA).zip') },
-    { title: 'Super C', genre: 'Action', year: 1990, rom: rom('Super C (USA).zip') },
-    { title: 'Contra Force', genre: 'Action', year: 1992, rom: rom('Contra Force (USA).zip') },
-    { title: 'Castlevania', genre: 'Action', year: 1987, rom: rom('Castlevania (USA).zip') },
-    { title: 'Castlevania II - Simon\'s Quest', genre: 'Action', year: 1988, rom: rom('Castlevania II - Simon\'s Quest (USA).zip') },
-    { title: 'Castlevania III - Dracula\'s Curse', genre: 'Action', year: 1990, rom: rom('Castlevania III - Dracula\'s Curse (USA).zip') },
-    { title: 'Metroid', genre: 'Action', year: 1987, rom: rom('Metroid (USA).zip') },
-    { title: 'Ninja Gaiden', genre: 'Action', year: 1989, rom: rom('Ninja Gaiden (USA).zip') },
-    { title: 'Ninja Gaiden II - The Dark Sword of Chaos', genre: 'Action', year: 1990, rom: rom('Ninja Gaiden II - The Dark Sword of Chaos (USA).zip') },
-    { title: 'Ninja Gaiden III - The Ancient Ship of Doom', genre: 'Action', year: 1991, rom: rom('Ninja Gaiden III - The Ancient Ship of Doom (USA).zip') },
-    { title: 'Batman - The Video Game', genre: 'Action', year: 1990, rom: rom('Batman - The Video Game (USA).zip') },
-    { title: 'Batman - Return of the Joker', genre: 'Action', year: 1991, rom: rom('Batman - Return of the Joker (USA).zip') },
-    { title: 'Batman Returns', genre: 'Action', year: 1993, rom: rom('Batman Returns (USA).zip') },
-    { title: 'Blaster Master', genre: 'Action', year: 1988, rom: rom('Blaster Master (USA).zip') },
-    { title: 'Metal Gear', genre: 'Action', year: 1988, rom: rom('Metal Gear (USA).zip') },
-    { title: 'Jackal', genre: 'Action', year: 1988, rom: rom('Jackal (USA).zip') },
-    { title: 'Gun.Smoke', genre: 'Action', year: 1988, rom: rom('Gun.Smoke (USA).zip') },
-    { title: 'Spy Hunter', genre: 'Action', year: 1987, rom: rom('Spy Hunter (USA).zip') },
-    { title: 'Abadox - The Deadly Inner War', genre: 'Action', year: 1990, rom: rom('Abadox - The Deadly Inner War (USA).zip') },
-    { title: 'Crystalis', genre: 'Action', year: 1990, rom: rom('Crystalis (USA).zip') },
-    { title: 'Bomberman', genre: 'Action', year: 1989, rom: rom('Bomberman (USA).zip') },
-    { title: 'Bomberman II', genre: 'Action', year: 1993, rom: rom('Bomberman II (USA).zip') },
-
-    // === BEAT EM UP ===
-    { title: 'Double Dragon', genre: 'Beat \'em up', year: 1988, rom: rom('Double Dragon (USA).zip') },
-    { title: 'Double Dragon II - The Revenge', genre: 'Beat \'em up', year: 1990, rom: rom('Double Dragon II - The Revenge (USA).zip') },
-    { title: 'Double Dragon III - The Sacred Stones', genre: 'Beat \'em up', year: 1991, rom: rom('Double Dragon III - The Sacred Stones (USA).zip') },
-    { title: 'Battletoads', genre: 'Beat \'em up', year: 1991, rom: rom('Battletoads (USA).zip') },
-    { title: 'Battletoads & Double Dragon', genre: 'Beat \'em up', year: 1993, rom: rom('Battletoads-Double Dragon (USA).zip') },
-    { title: 'River City Ransom', genre: 'Beat \'em up', year: 1990, rom: rom('River City Ransom (USA).zip') },
-    { title: 'Teenage Mutant Ninja Turtles', genre: 'Beat \'em up', year: 1989, rom: rom('Teenage Mutant Ninja Turtles (USA).zip') },
-    { title: 'TMNT II - The Arcade Game', genre: 'Beat \'em up', year: 1990, rom: rom('Teenage Mutant Ninja Turtles II - The Arcade Game (USA).zip') },
-    { title: 'TMNT III - The Manhattan Project', genre: 'Beat \'em up', year: 1992, rom: rom('Teenage Mutant Ninja Turtles III - The Manhattan Project (USA).zip') },
-    { title: 'Jackie Chan\'s Action Kung Fu', genre: 'Beat \'em up', year: 1990, rom: rom('Jackie Chan\'s Action Kung Fu (USA).zip') },
-
-    // === RPG ===
-    { title: 'Legend of Zelda, The', genre: 'RPG', year: 1987, rom: rom('Legend of Zelda, The (USA).zip') },
-    { title: 'Zelda II - The Adventure of Link', genre: 'RPG', year: 1988, rom: rom('Zelda II - The Adventure of Link (USA).zip') },
-    { title: 'Final Fantasy', genre: 'RPG', year: 1990, rom: rom('Final Fantasy (USA).zip') },
-    { title: 'Dragon Warrior', genre: 'RPG', year: 1989, rom: rom('Dragon Warrior (USA).zip') },
-    { title: 'Dragon Warrior II', genre: 'RPG', year: 1990, rom: rom('Dragon Warrior II (USA).zip') },
-    { title: 'Dragon Warrior III', genre: 'RPG', year: 1992, rom: rom('Dragon Warrior III (USA).zip') },
-    { title: 'Dragon Warrior IV', genre: 'RPG', year: 1992, rom: rom('Dragon Warrior IV (USA).zip') },
-
-    // === SHOOTER ===
-    { title: '1943 - The Battle of Midway', genre: 'Shooter', year: 1988, rom: rom('1943 - The Battle of Midway (USA).zip') },
-    { title: 'Galaga - Demons of Death', genre: 'Shooter', year: 1988, rom: rom('Galaga - Demons of Death (USA).zip') },
-    { title: 'Gradius', genre: 'Shooter', year: 1986, rom: rom('Gradius (USA).zip') },
-    { title: 'Life Force', genre: 'Shooter', year: 1988, rom: rom('Life Force (USA).zip') },
-    { title: 'Air Fortress', genre: 'Shooter', year: 1989, rom: rom('Air Fortress (USA).zip') },
-
-    // === PUZZLE ===
-    { title: 'Tetris', genre: 'Puzzle', year: 1989, rom: rom('Tetris (USA).zip') },
-    { title: 'Tetris 2', genre: 'Puzzle', year: 1993, rom: rom('Tetris 2 (USA).zip') },
-    { title: 'Dr. Mario', genre: 'Puzzle', year: 1990, rom: rom('Dr. Mario (Japan, USA) (En).zip') },
-    { title: 'Solomon\'s Key', genre: 'Puzzle', year: 1987, rom: rom('Solomon\'s Key (USA).zip') },
-
-    // === ARCADE ===
-    { title: 'Pac-Man', genre: 'Arcade', year: 1984, rom: rom('Pac-Man (USA) (Namco).zip') },
-    { title: 'Ms. Pac-Man', genre: 'Arcade', year: 1990, rom: rom('Ms. Pac-Man (USA) (Namco).zip') },
-    { title: 'Balloon Fight', genre: 'Arcade', year: 1986, rom: rom('Balloon Fight (USA).zip') },
-    { title: 'Arkanoid', genre: 'Arcade', year: 1987, rom: rom('Arkanoid (USA).zip') },
-    { title: 'Marble Madness', genre: 'Arcade', year: 1989, rom: rom('Marble Madness (USA).zip') },
-    { title: 'Dig Dug II', genre: 'Arcade', year: 1986, rom: rom('Dig Dug II - Trouble in Paradise (USA).zip') },
-
-    // === SPORTS / RACING ===
-    { title: 'Tecmo Bowl', genre: 'Sports', year: 1989, rom: rom('Tecmo Bowl (USA).zip') },
-    { title: 'Tecmo Super Bowl', genre: 'Sports', year: 1991, rom: rom('Tecmo Super Bowl (USA).zip') },
-    { title: 'Punch-Out!!', genre: 'Sports', year: 1990, rom: rom('Punch-Out!! (USA).zip') },
-    { title: 'Excitebike', genre: 'Racing', year: 1985, rom: rom('Excitebike (Japan, USA) (En).zip') },
-    { title: 'R.C. Pro-Am', genre: 'Racing', year: 1988, rom: rom('R.C. Pro-Am (USA).zip') },
-    { title: 'R.C. Pro-Am II', genre: 'Racing', year: 1992, rom: rom('R.C. Pro-Am II (USA).zip') },
-    { title: 'Paperboy', genre: 'Arcade', year: 1988, rom: rom('Paperboy (USA).zip') },
-  ];
-
-  // All unique genres
-  const genres = [...new Set(games.map(g => g.genre))].sort();
+  /**
+   * Basic genre guesser based on title keywords
+   */
+  function guessGenre(title) {
+    const t = title.toLowerCase();
+    if (/mario|kirby|mega man|duck|adventure island|lode runner|bionic|ice climber|donkey kong|kid icarus|prince of persia/.test(t)) return 'Platformer';
+    if (/zelda|final fantasy|dragon warrior|dragon quest|crystalis|faxanadu/.test(t)) return 'RPG';
+    if (/contra|castlevania|metroid|ninja gaiden|batman|metal gear|blaster master/.test(t)) return 'Action';
+    if (/double dragon|battletoads|river city|tmnt|teenage mutant|kung fu/.test(t)) return 'Beat \'em up';
+    if (/tetris|dr\. mario|puzzle|lolo/.test(t)) return 'Puzzle';
+    if (/gradius|galaga|1942|1943|life force|star force|shooting|air fortress/.test(t)) return 'Shooter';
+    if (/baseball|football|basketball|hockey|bowl|tennis|boxing|wrestling|punch/.test(t)) return 'Sports';
+    if (/race|racing|excitebike|pro-am|rad racer/.test(t)) return 'Racing';
+    if (/pac-man|balloon|arkanoid|pinball|marble|dig dug|bubble bobble/.test(t)) return 'Arcade';
+    return 'Other';
+  }
 
   /**
    * Search/filter games
    */
   function search({ query = '', genre = '' } = {}) {
-    let results = games;
+    let results = allGames;
 
     if (genre) {
       results = results.filter(g => g.genre === genre);
@@ -140,8 +108,10 @@ const GamesDB = (() => {
     return results;
   }
 
-  function getAll() { return games; }
-  function count() { return games.length; }
+  function getAll() { return allGames; }
+  function count() { return allGames.length; }
+  function isLoaded() { return loaded; }
+  function getGenres() { return genres; }
 
-  return { search, getAll, count, genres };
+  return { load, search, getAll, count, isLoaded, getGenres, get genres() { return genres; } };
 })();

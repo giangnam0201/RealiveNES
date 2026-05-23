@@ -2,8 +2,7 @@
  * RealiveNES - Main Application
  * 
  * Game selector UI + EmulatorJS integration via iframe.
- * Uses iframe approach so EmulatorJS can be fully reloaded
- * for each new game without "already declared" errors.
+ * Loads full game list from Archive.org dynamically.
  */
 
 const App = (() => {
@@ -25,16 +24,7 @@ const App = (() => {
   const nowPlayingTitle = document.getElementById('nowPlayingTitle');
   const stopBtn = document.getElementById('stopBtn');
 
-  function init() {
-    // Populate genre dropdown
-    genreFilter.innerHTML = '<option value="">All Genres</option>';
-    GamesDB.genres.forEach(g => {
-      const opt = document.createElement('option');
-      opt.value = g;
-      opt.textContent = g;
-      genreFilter.appendChild(opt);
-    });
-
+  async function init() {
     // Events
     searchBtn.addEventListener('click', renderGames);
     searchInput.addEventListener('input', renderGames);
@@ -44,11 +34,33 @@ const App = (() => {
     genreFilter.addEventListener('change', renderGames);
     stopBtn.addEventListener('click', stopEmulator);
 
-    // Initial render
-    renderGames();
+    // Show loading state
+    gameCountEl.textContent = 'Loading...';
+    gameListEl.innerHTML = '<div class="no-results">Fetching game list from Archive.org...</div>';
+
+    // Load game database
+    try {
+      await GamesDB.load();
+
+      // Populate genre dropdown
+      genreFilter.innerHTML = '<option value="">All Genres</option>';
+      GamesDB.genres.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g;
+        opt.textContent = g;
+        genreFilter.appendChild(opt);
+      });
+
+      renderGames();
+    } catch (err) {
+      gameCountEl.textContent = 'Error';
+      gameListEl.innerHTML = `<div class="no-results">Failed to load games: ${err.message}<br><br>Try refreshing the page.</div>`;
+    }
   }
 
   function renderGames() {
+    if (!GamesDB.isLoaded()) return;
+
     currentQuery = searchInput.value.trim();
     currentGenre = genreFilter.value;
 
@@ -62,6 +74,9 @@ const App = (() => {
       return;
     }
 
+    // Use DocumentFragment for performance with 1200+ items
+    const frag = document.createDocumentFragment();
+
     results.forEach(game => {
       const el = document.createElement('div');
       el.className = 'game-item' + (game.title === currentGameTitle ? ' active' : '');
@@ -69,7 +84,7 @@ const App = (() => {
       el.innerHTML = `
         <div class="game-info">
           <div class="game-title" title="${esc(game.title)}">${esc(game.title)}</div>
-          <div class="game-meta">${esc(game.genre)} &middot; ${game.year}</div>
+          <div class="game-meta">${esc(game.genre)}</div>
         </div>
         <button class="play-btn">Play</button>
       `;
@@ -81,8 +96,10 @@ const App = (() => {
       });
       el.addEventListener('click', () => launchGame(game, btn));
 
-      gameListEl.appendChild(el);
+      frag.appendChild(el);
     });
+
+    gameListEl.appendChild(frag);
   }
 
   function launchGame(game, btn) {
@@ -106,7 +123,7 @@ const App = (() => {
     document.querySelectorAll('.game-item').forEach(el => el.classList.remove('active'));
     if (btn) btn.closest('.game-item').classList.add('active');
 
-    // Load EmulatorJS in iframe (avoids "already declared" errors on reload)
+    // Load EmulatorJS in iframe
     loadEmulatorIframe(game.rom);
 
     // Reset button
@@ -119,8 +136,7 @@ const App = (() => {
   }
 
   /**
-   * Load EmulatorJS inside an iframe to get a fresh JS context each time.
-   * This avoids the "Identifier 'EJS_STORAGE' has already been declared" error.
+   * Load EmulatorJS inside an iframe for a fresh JS context each time.
    */
   function loadEmulatorIframe(romUrl) {
     const container = document.getElementById('game');
@@ -137,7 +153,6 @@ const App = (() => {
 
     container.appendChild(iframe);
 
-    // Build the iframe HTML content
     const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -162,7 +177,6 @@ const App = (() => {
 </body>
 </html>`;
 
-    // Write to iframe
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     doc.open();
     doc.write(html);
