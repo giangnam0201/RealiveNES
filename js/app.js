@@ -69,7 +69,7 @@ const App = (() => {
       el.innerHTML = `
         <div class="game-info">
           <div class="game-title" title="${esc(game.title)}">${esc(game.title)}</div>
-          <div class="game-meta">${esc(game.genre)} &mdash; ${esc(game.desc)}</div>
+          <div class="game-meta">${esc(game.genre)} &middot; ${game.year}</div>
         </div>
         <button class="play-btn">Play</button>
       `;

@@ -1,114 +1,122 @@
 /**
  * NES Games Database
  * 
- * Homebrew NES games hosted on GitHub (retrobrews/nes-games) via jsDelivr CDN.
- * All games are free/open-source homebrew — legal to distribute and play.
+ * Curated catalog of classic NES games from Archive.org (roms_nes collection).
+ * Uses the CORS-enabled endpoint: https://archive.org/cors/{id}/{file}
  * 
- * CDN: cdn.jsdelivr.net/gh/retrobrews/nes-games@master/{filename}
- * - Fast, reliable, CORS-enabled
- * - No API calls needed
+ * EmulatorJS handles .zip extraction natively — no client-side unzipping needed.
  */
 
 const GamesDB = (() => {
-  const CDN = 'https://cdn.jsdelivr.net/gh/retrobrews/nes-games@master/';
+  const BASE = 'https://archive.org/cors/roms_nes/';
+
+  function rom(filename) {
+    return BASE + encodeURIComponent(filename);
+  }
 
   const games = [
-    // Action / Platformer
-    { title: 'Sir Ababol Remastered', genre: 'Platformer', desc: 'Classic platformer adventure with tight controls', rom: CDN + 'sir-ababol-remastered.nes' },
-    { title: 'Nova the Squirrel', genre: 'Platformer', desc: 'Colorful platformer with puzzle elements', rom: CDN + 'novathesquirrel.nes' },
-    { title: 'The Owlia', genre: 'Action RPG', desc: 'Zelda-like adventure with exploration', rom: CDN + 'owlia.nes' },
-    { title: 'Twin Dragons', genre: 'Platformer', desc: 'Co-op platformer for 1-2 players', rom: CDN + 'twindragons.nes' },
-    { title: 'Cheril the Goddess', genre: 'Platformer', desc: 'Action platformer with mythological themes', rom: CDN + 'cheril-the-goddess.nes' },
-    { title: 'Mega Mountain', genre: 'Platformer', desc: 'Climb the mega mountain to the top', rom: CDN + 'megamountain.nes' },
-    { title: 'Nomolos', genre: 'Platformer', desc: 'Reverse platformer — enemies run from you', rom: CDN + 'nomolos.nes' },
-    { title: 'The Mad Wizard', genre: 'Platformer', desc: 'Magical platforming adventure', rom: CDN + 'themadwizard.nes' },
-    { title: 'Mad Wizard', genre: 'Platformer', desc: 'Wizard-themed action platformer', rom: CDN + 'madwizard.nes' },
-    { title: 'Rise of Amondus', genre: 'Platformer', desc: 'Epic retro platformer quest', rom: CDN + 'riseofamondus.nes' },
-    { title: 'Bootee', genre: 'Platformer', desc: 'Simple and fun platforming action', rom: CDN + 'bootee.nes' },
-    { title: 'Jet Paco', genre: 'Platformer', desc: 'Jetpack-powered platformer', rom: CDN + 'jetpaco.nes' },
-    { title: 'Super Uwol', genre: 'Platformer', desc: 'Arcade-style platformer with fast gameplay', rom: CDN + 'superuwol.nes' },
-    { title: 'Obstacle Trek', genre: 'Platformer', desc: 'Navigate through dangerous obstacles', rom: CDN + 'obstacletrek.nes' },
-    { title: 'Tiger Jenny', genre: 'Action', desc: 'Beat-em-up style action game', rom: CDN + 'tigerjenny.nes' },
-    { title: 'Vigilante Ninja', genre: 'Action', desc: 'Ninja action side-scroller', rom: CDN + 'vigilanteninja.nes' },
-    { title: 'Ninja Muncher', genre: 'Action', desc: 'Fast-paced ninja action', rom: CDN + 'ninjamuncher.nes' },
-    { title: 'Sgt Helmet', genre: 'Action', desc: 'Military action platformer', rom: CDN + 'sgthelmet.nes' },
-    { title: 'Robo Ninja Climb', genre: 'Action', desc: 'Vertical climbing action', rom: CDN + 'roboninjaclimb.nes' },
-    { title: 'Super Tilt Bro', genre: 'Fighting', desc: 'Smash Bros-inspired NES fighting game', rom: CDN + 'super-tilt-bro.nes' },
-    { title: 'Midnight Jogger', genre: 'Action', desc: 'Nighttime running action', rom: CDN + 'midnightjogger.nes' },
-    { title: 'Ralph 4', genre: 'Platformer', desc: 'Classic platformer adventure', rom: CDN + 'ralph4.nes' },
+    // === PLATFORMERS ===
+    { title: 'Super Mario Bros. 2', genre: 'Platformer', year: 1988, rom: rom('Super Mario Bros. 2 (USA).zip') },
+    { title: 'Super Mario Bros. 3', genre: 'Platformer', year: 1990, rom: rom('Super Mario Bros. 3 (USA).zip') },
+    { title: 'Kirby\'s Adventure', genre: 'Platformer', year: 1993, rom: rom('Kirby\'s Adventure (USA).zip') },
+    { title: 'DuckTales', genre: 'Platformer', year: 1989, rom: rom('DuckTales (USA).zip') },
+    { title: 'DuckTales 2', genre: 'Platformer', year: 1993, rom: rom('DuckTales 2 (USA).zip') },
+    { title: 'Chip \'n Dale - Rescue Rangers', genre: 'Platformer', year: 1990, rom: rom('Chip \'n Dale - Rescue Rangers (USA).zip') },
+    { title: 'Chip \'n Dale - Rescue Rangers 2', genre: 'Platformer', year: 1994, rom: rom('Chip \'n Dale - Rescue Rangers 2 (USA).zip') },
+    { title: 'Mega Man', genre: 'Platformer', year: 1987, rom: rom('Mega Man (USA).zip') },
+    { title: 'Mega Man 2', genre: 'Platformer', year: 1989, rom: rom('Mega Man 2 (USA).zip') },
+    { title: 'Mega Man 3', genre: 'Platformer', year: 1990, rom: rom('Mega Man 3 (USA).zip') },
+    { title: 'Mega Man 4', genre: 'Platformer', year: 1992, rom: rom('Mega Man 4 (USA).zip') },
+    { title: 'Mega Man 5', genre: 'Platformer', year: 1992, rom: rom('Mega Man 5 (USA).zip') },
+    { title: 'Mega Man 6', genre: 'Platformer', year: 1994, rom: rom('Mega Man 6 (USA).zip') },
+    { title: 'Adventure Island', genre: 'Platformer', year: 1988, rom: rom('Adventure Island (USA).zip') },
+    { title: 'Adventure Island II', genre: 'Platformer', year: 1991, rom: rom('Adventure Island II (USA).zip') },
+    { title: 'Adventure Island 3', genre: 'Platformer', year: 1992, rom: rom('Adventure Island 3 (USA).zip') },
+    { title: 'Bubble Bobble', genre: 'Platformer', year: 1988, rom: rom('Bubble Bobble (USA).zip') },
+    { title: 'Ghosts\'n Goblins', genre: 'Platformer', year: 1986, rom: rom('Ghosts\'n Goblins (USA).zip') },
+    { title: 'Kid Icarus', genre: 'Platformer', year: 1987, rom: rom('Kid Icarus (USA, Europe).zip') },
+    { title: 'Prince of Persia', genre: 'Platformer', year: 1992, rom: rom('Prince of Persia (USA).zip') },
+    { title: 'Lode Runner', genre: 'Platformer', year: 1984, rom: rom('Lode Runner (USA).zip') },
+    { title: 'Donkey Kong Classics', genre: 'Platformer', year: 1988, rom: rom('Donkey Kong Classics (USA, Europe).zip') },
+    { title: 'Ice Climber', genre: 'Platformer', year: 1985, rom: rom('Ice Climber (USA, Europe, Korea) (En).zip') },
+    { title: 'Elevator Action', genre: 'Platformer', year: 1987, rom: rom('Elevator Action (USA).zip') },
+    { title: 'Bionic Commando', genre: 'Platformer', year: 1988, rom: rom('Bionic Commando (USA).zip') },
+    { title: 'Faxanadu', genre: 'Platformer', year: 1989, rom: rom('Faxanadu (USA).zip') },
 
-    // Shooter
-    { title: 'Blaster', genre: 'Shooter', desc: 'Space shooting action', rom: CDN + 'blaster.nes' },
-    { title: 'Brony Blaster', genre: 'Shooter', desc: 'Colorful shoot-em-up', rom: CDN + 'bronyblaster.nes' },
-    { title: 'Invaders', genre: 'Shooter', desc: 'Classic space invaders style', rom: CDN + 'invaders.nes' },
-    { title: 'Star Evil', genre: 'Shooter', desc: 'Space shooter with boss battles', rom: CDN + 'starevil.nes' },
-    { title: 'Spacey McRacey', genre: 'Shooter', desc: 'Space racing shooter', rom: CDN + 'spaceymcracey.nes' },
-    { title: 'The Invasion', genre: 'Shooter', desc: 'Defend earth from alien invasion', rom: CDN + 'theinvasion.nes' },
-    { title: 'Thwaite', genre: 'Shooter', desc: 'Missile Command-style defense game', rom: CDN + 'thwaite.nes' },
+    // === ACTION ===
+    { title: 'Contra', genre: 'Action', year: 1988, rom: rom('Contra (USA).zip') },
+    { title: 'Super C', genre: 'Action', year: 1990, rom: rom('Super C (USA).zip') },
+    { title: 'Contra Force', genre: 'Action', year: 1992, rom: rom('Contra Force (USA).zip') },
+    { title: 'Castlevania', genre: 'Action', year: 1987, rom: rom('Castlevania (USA).zip') },
+    { title: 'Castlevania II - Simon\'s Quest', genre: 'Action', year: 1988, rom: rom('Castlevania II - Simon\'s Quest (USA).zip') },
+    { title: 'Castlevania III - Dracula\'s Curse', genre: 'Action', year: 1990, rom: rom('Castlevania III - Dracula\'s Curse (USA).zip') },
+    { title: 'Metroid', genre: 'Action', year: 1987, rom: rom('Metroid (USA).zip') },
+    { title: 'Ninja Gaiden', genre: 'Action', year: 1989, rom: rom('Ninja Gaiden (USA).zip') },
+    { title: 'Ninja Gaiden II - The Dark Sword of Chaos', genre: 'Action', year: 1990, rom: rom('Ninja Gaiden II - The Dark Sword of Chaos (USA).zip') },
+    { title: 'Ninja Gaiden III - The Ancient Ship of Doom', genre: 'Action', year: 1991, rom: rom('Ninja Gaiden III - The Ancient Ship of Doom (USA).zip') },
+    { title: 'Batman - The Video Game', genre: 'Action', year: 1990, rom: rom('Batman - The Video Game (USA).zip') },
+    { title: 'Batman - Return of the Joker', genre: 'Action', year: 1991, rom: rom('Batman - Return of the Joker (USA).zip') },
+    { title: 'Batman Returns', genre: 'Action', year: 1993, rom: rom('Batman Returns (USA).zip') },
+    { title: 'Blaster Master', genre: 'Action', year: 1988, rom: rom('Blaster Master (USA).zip') },
+    { title: 'Metal Gear', genre: 'Action', year: 1988, rom: rom('Metal Gear (USA).zip') },
+    { title: 'Jackal', genre: 'Action', year: 1988, rom: rom('Jackal (USA).zip') },
+    { title: 'Gun.Smoke', genre: 'Action', year: 1988, rom: rom('Gun.Smoke (USA).zip') },
+    { title: 'Spy Hunter', genre: 'Action', year: 1987, rom: rom('Spy Hunter (USA).zip') },
+    { title: 'Abadox - The Deadly Inner War', genre: 'Action', year: 1990, rom: rom('Abadox - The Deadly Inner War (USA).zip') },
+    { title: 'Crystalis', genre: 'Action', year: 1990, rom: rom('Crystalis (USA).zip') },
+    { title: 'Bomberman', genre: 'Action', year: 1989, rom: rom('Bomberman (USA).zip') },
+    { title: 'Bomberman II', genre: 'Action', year: 1993, rom: rom('Bomberman II (USA).zip') },
 
-    // Puzzle
-    { title: 'Assimilate', genre: 'Puzzle', desc: 'Color-matching puzzle game', rom: CDN + 'assimilate.nes' },
-    { title: 'BabelBlox', genre: 'Puzzle', desc: 'Block-stacking puzzle', rom: CDN + 'babelblox.nes' },
-    { title: 'Pegs', genre: 'Puzzle', desc: 'Peg solitaire on NES', rom: CDN + 'pegs.nes' },
-    { title: 'Memory', genre: 'Puzzle', desc: 'Classic memory card matching', rom: CDN + 'memory.nes' },
-    { title: 'Black Box Challenge', genre: 'Puzzle', desc: 'Logic deduction puzzle', rom: CDN + 'blackboxchallenge.nes' },
-    { title: 'Bomb Array', genre: 'Puzzle', desc: 'Minesweeper-style puzzle', rom: CDN + 'bombarray.nes' },
-    { title: 'The Wit', genre: 'Puzzle', desc: 'Brain-teasing puzzle game', rom: CDN + 'thewit.nes' },
-    { title: 'Virus Cleaner', genre: 'Puzzle', desc: 'Dr. Mario-inspired puzzle', rom: CDN + 'viruscleaner.nes' },
-    { title: 'Cl1k', genre: 'Puzzle', desc: 'Minimalist clicker puzzle', rom: CDN + 'cl1k.nes' },
+    // === BEAT EM UP ===
+    { title: 'Double Dragon', genre: 'Beat \'em up', year: 1988, rom: rom('Double Dragon (USA).zip') },
+    { title: 'Double Dragon II - The Revenge', genre: 'Beat \'em up', year: 1990, rom: rom('Double Dragon II - The Revenge (USA).zip') },
+    { title: 'Double Dragon III - The Sacred Stones', genre: 'Beat \'em up', year: 1991, rom: rom('Double Dragon III - The Sacred Stones (USA).zip') },
+    { title: 'Battletoads', genre: 'Beat \'em up', year: 1991, rom: rom('Battletoads (USA).zip') },
+    { title: 'Battletoads & Double Dragon', genre: 'Beat \'em up', year: 1993, rom: rom('Battletoads-Double Dragon (USA).zip') },
+    { title: 'River City Ransom', genre: 'Beat \'em up', year: 1990, rom: rom('River City Ransom (USA).zip') },
+    { title: 'Teenage Mutant Ninja Turtles', genre: 'Beat \'em up', year: 1989, rom: rom('Teenage Mutant Ninja Turtles (USA).zip') },
+    { title: 'TMNT II - The Arcade Game', genre: 'Beat \'em up', year: 1990, rom: rom('Teenage Mutant Ninja Turtles II - The Arcade Game (USA).zip') },
+    { title: 'TMNT III - The Manhattan Project', genre: 'Beat \'em up', year: 1992, rom: rom('Teenage Mutant Ninja Turtles III - The Manhattan Project (USA).zip') },
+    { title: 'Jackie Chan\'s Action Kung Fu', genre: 'Beat \'em up', year: 1990, rom: rom('Jackie Chan\'s Action Kung Fu (USA).zip') },
 
-    // Arcade / Casual
-    { title: 'Flappy Bird', genre: 'Arcade', desc: 'The classic mobile game on NES', rom: CDN + 'flappybird.nes' },
-    { title: 'Flappy Block', genre: 'Arcade', desc: 'Block-style Flappy variant', rom: CDN + 'flappyblock.nes' },
-    { title: 'Flappy Jack', genre: 'Arcade', desc: 'Another Flappy-style game', rom: CDN + 'flappyjack.nes' },
-    { title: 'Falling', genre: 'Arcade', desc: 'Dodge falling objects', rom: CDN + 'falling.nes' },
-    { title: 'Debris Dodger', genre: 'Arcade', desc: 'Avoid space debris', rom: CDN + 'debrisdodger.nes' },
-    { title: 'Mashy Mashy', genre: 'Arcade', desc: 'Button-mashing arcade fun', rom: CDN + 'mashymashy.nes' },
-    { title: 'Miedow', genre: 'Arcade', desc: 'Retro arcade action', rom: CDN + 'miedow.nes' },
-    { title: 'Lunar Limit', genre: 'Arcade', desc: 'Moon lander-style arcade', rom: CDN + 'lunarlimit.nes' },
-    { title: 'Super Pak Pak', genre: 'Arcade', desc: 'Pac-Man inspired arcade', rom: CDN + 'superpakpak.nes' },
-    { title: 'Snail Maze', genre: 'Arcade', desc: 'Navigate mazes as a snail', rom: CDN + 'snailmaze.nes' },
-    { title: 'Mouser 2', genre: 'Arcade', desc: 'Cat and mouse arcade game', rom: CDN + 'mouser2.nes' },
-    { title: 'That\'s Whack', genre: 'Arcade', desc: 'Whack-a-mole style game', rom: CDN + 'thatswhack.nes' },
-    { title: 'Indivisible on NES', genre: 'Arcade', desc: 'NES demake of Indivisible', rom: CDN + 'indivisibleonnes.nes' },
+    // === RPG ===
+    { title: 'Legend of Zelda, The', genre: 'RPG', year: 1987, rom: rom('Legend of Zelda, The (USA).zip') },
+    { title: 'Zelda II - The Adventure of Link', genre: 'RPG', year: 1988, rom: rom('Zelda II - The Adventure of Link (USA).zip') },
+    { title: 'Final Fantasy', genre: 'RPG', year: 1990, rom: rom('Final Fantasy (USA).zip') },
+    { title: 'Dragon Warrior', genre: 'RPG', year: 1989, rom: rom('Dragon Warrior (USA).zip') },
+    { title: 'Dragon Warrior II', genre: 'RPG', year: 1990, rom: rom('Dragon Warrior II (USA).zip') },
+    { title: 'Dragon Warrior III', genre: 'RPG', year: 1992, rom: rom('Dragon Warrior III (USA).zip') },
+    { title: 'Dragon Warrior IV', genre: 'RPG', year: 1992, rom: rom('Dragon Warrior IV (USA).zip') },
 
-    // Strategy / Other
-    { title: 'RHDE', genre: 'Strategy', desc: 'Real-time strategy for NES', rom: CDN + 'rhde.nes' },
-    { title: 'Mineshaft', genre: 'Adventure', desc: 'Mining adventure game', rom: CDN + 'mineshaft.nes' },
-    { title: 'Robot Finds Kitten', genre: 'Adventure', desc: 'Zen exploration game', rom: CDN + 'robotfindskitten.nes' },
-    { title: 'Filthy Kitchen', genre: 'Adventure', desc: 'Kitchen-themed adventure', rom: CDN + 'filthykitchen.nes' },
-    { title: 'Driar', genre: 'Adventure', desc: 'Atmospheric adventure', rom: CDN + 'driar.nes' },
-    { title: 'NESert Bus', genre: 'Simulation', desc: 'Desert Bus for NES — the ultimate endurance test', rom: CDN + 'nesertbus.nes' },
-    { title: 'Lala', genre: 'Adventure', desc: 'Cute adventure game', rom: CDN + 'lala.nes' },
+    // === SHOOTER ===
+    { title: '1943 - The Battle of Midway', genre: 'Shooter', year: 1988, rom: rom('1943 - The Battle of Midway (USA).zip') },
+    { title: 'Galaga - Demons of Death', genre: 'Shooter', year: 1988, rom: rom('Galaga - Demons of Death (USA).zip') },
+    { title: 'Gradius', genre: 'Shooter', year: 1986, rom: rom('Gradius (USA).zip') },
+    { title: 'Life Force', genre: 'Shooter', year: 1988, rom: rom('Life Force (USA).zip') },
+    { title: 'Air Fortress', genre: 'Shooter', year: 1989, rom: rom('Air Fortress (USA).zip') },
 
-    // Sports / Multiplayer
-    { title: 'Pong 1K', genre: 'Sports', desc: 'Classic Pong in 1KB', rom: CDN + 'pong1k.nes' },
-    { title: 'Pong 1K 2P', genre: 'Sports', desc: 'Two-player Pong', rom: CDN + 'pong1k2p.nes' },
-    { title: 'Roulette', genre: 'Casino', desc: 'NES roulette game', rom: CDN + 'roulette.nes' },
-    { title: 'Rock Paper Scissors', genre: 'Arcade', desc: 'RPS with lizard and spock', rom: CDN + 'rpsls.nes' },
-    { title: 'Tic Tac XO', genre: 'Puzzle', desc: 'Tic Tac Toe on NES', rom: CDN + 'tictacxo.nes' },
-    { title: 'Tic Tac Two P', genre: 'Puzzle', desc: 'Two-player Tic Tac Toe', rom: CDN + 'tictactwop.nes' },
-    { title: 'Simone Says', genre: 'Arcade', desc: 'Simon Says memory game', rom: CDN + 'simonesays.nes' },
+    // === PUZZLE ===
+    { title: 'Tetris', genre: 'Puzzle', year: 1989, rom: rom('Tetris (USA).zip') },
+    { title: 'Tetris 2', genre: 'Puzzle', year: 1993, rom: rom('Tetris 2 (USA).zip') },
+    { title: 'Dr. Mario', genre: 'Puzzle', year: 1990, rom: rom('Dr. Mario (Japan, USA) (En).zip') },
+    { title: 'Solomon\'s Key', genre: 'Puzzle', year: 1987, rom: rom('Solomon\'s Key (USA).zip') },
 
-    // Multi-game
-    { title: '31-in-1 Real Game', genre: 'Compilation', desc: '31 games in one cart', rom: CDN + '31in1realgame-multicart.nes' },
-    { title: '3-in-1 2P Pak', genre: 'Compilation', desc: '3 multiplayer games', rom: CDN + '3in12ppak.nes' },
+    // === ARCADE ===
+    { title: 'Pac-Man', genre: 'Arcade', year: 1984, rom: rom('Pac-Man (USA) (Namco).zip') },
+    { title: 'Ms. Pac-Man', genre: 'Arcade', year: 1990, rom: rom('Ms. Pac-Man (USA) (Namco).zip') },
+    { title: 'Balloon Fight', genre: 'Arcade', year: 1986, rom: rom('Balloon Fight (USA).zip') },
+    { title: 'Arkanoid', genre: 'Arcade', year: 1987, rom: rom('Arkanoid (USA).zip') },
+    { title: 'Marble Madness', genre: 'Arcade', year: 1989, rom: rom('Marble Madness (USA).zip') },
+    { title: 'Dig Dug II', genre: 'Arcade', year: 1986, rom: rom('Dig Dug II - Trouble in Paradise (USA).zip') },
 
-    // More
-    { title: 'M Guard', genre: 'Action', desc: 'Guard defense action game', rom: CDN + 'mguard.nes' },
-    { title: 'M Guard 2', genre: 'Action', desc: 'Sequel to M Guard', rom: CDN + 'mguard2.nes' },
-    { title: 'FFF', genre: 'Action', desc: 'Fast and furious fighter', rom: CDN + 'fff.nes' },
-    { title: 'DABG', genre: 'Action', desc: 'Action arcade game', rom: CDN + 'dabg.nes' },
-    { title: 'GSM', genre: 'Arcade', desc: 'Retro arcade game', rom: CDN + 'gsm.nes' },
-    { title: 'KYFF', genre: 'Action', desc: 'Kick Your Friends off the Floor', rom: CDN + 'kyff.nes' },
-    { title: 'For Points', genre: 'Arcade', desc: 'Score attack game', rom: CDN + 'forpoints.nes' },
-    { title: 'No Points', genre: 'Arcade', desc: 'Anti-score game', rom: CDN + 'nopoints.nes' },
-    { title: 'Light Shields', genre: 'Action', desc: 'Light-based defense game', rom: CDN + 'lightshields.nes' },
-    { title: 'CRoom', genre: 'Puzzle', desc: 'Room escape puzzle', rom: CDN + 'croom.nes' },
-    { title: 'Wo Xiang Niao Niao', genre: 'Arcade', desc: 'Chinese-themed arcade', rom: CDN + 'wo-xiang-niao-niao.nes' },
-    { title: 'Yun', genre: 'Arcade', desc: 'Simple arcade game', rom: CDN + 'yun.nes' },
-    { title: 'NintenCat: The Parody', genre: 'Arcade', desc: 'Cat-themed parody game', rom: CDN + 'nintencattheparody.nes' },
-    { title: 'The One with the Walls', genre: 'Puzzle', desc: 'Navigate through walls', rom: CDN + 'theonewiththewalls.nes' },
+    // === SPORTS / RACING ===
+    { title: 'Tecmo Bowl', genre: 'Sports', year: 1989, rom: rom('Tecmo Bowl (USA).zip') },
+    { title: 'Tecmo Super Bowl', genre: 'Sports', year: 1991, rom: rom('Tecmo Super Bowl (USA).zip') },
+    { title: 'Punch-Out!!', genre: 'Sports', year: 1990, rom: rom('Punch-Out!! (USA).zip') },
+    { title: 'Excitebike', genre: 'Racing', year: 1985, rom: rom('Excitebike (Japan, USA) (En).zip') },
+    { title: 'R.C. Pro-Am', genre: 'Racing', year: 1988, rom: rom('R.C. Pro-Am (USA).zip') },
+    { title: 'R.C. Pro-Am II', genre: 'Racing', year: 1992, rom: rom('R.C. Pro-Am II (USA).zip') },
+    { title: 'Paperboy', genre: 'Arcade', year: 1988, rom: rom('Paperboy (USA).zip') },
   ];
 
   // All unique genres
@@ -126,10 +134,7 @@ const GamesDB = (() => {
 
     if (query.trim()) {
       const q = query.toLowerCase();
-      results = results.filter(g =>
-        g.title.toLowerCase().includes(q) ||
-        g.desc.toLowerCase().includes(q)
-      );
+      results = results.filter(g => g.title.toLowerCase().includes(q));
     }
 
     return results;
